@@ -4,6 +4,17 @@
 
 
 
+- lire ce qu'est une surcharge de réseau ; 
+- trouver l'échelle d'une "antenne réseau" et rassembler nos cases en fonction -> nouvelle grille.
+- déterminer par une combinaison linéaire un score par nouvelle case
+- prendre les 5 % les plus haut, ca donne un 19e vingtile haut, c'est notre seuil.
+- on labellise par "surcharge" tous les timestamp+grosse cases au dessu.
+- on prévoit avec les données non scorées. 
+
+
+- tester la corrélation entre appels, sms, etc. 
+
+
 ICI : MES NOTES PAS NETTOYEES POUR INSPI :
 
 En vrac pour DM
@@ -18,7 +29,6 @@ Transformer l'information des appels/sms d'une journée type en un vecteur par g
 Par exemple :  
 Pour chaque cellule C :
   Sommer dans un vecteur de 24*k (k<=6) cases les intensités de communication pour sms/appel/internet (potentiellement 3 vecteurs donc trois clusterings différents) ; 
-  
   - transformer en un attribut catégoriel chaque case suivant que la valeur est au dessus/en dessous de la médiane 'au bien au desus en dessous de troisième quartile, ou deuxième tercie, à voir), et faire du fréquent mining -> on risque pas de trouver grand-chose si trop de cases de cette façon car dimensionnality curse -> réduire à 24/12 la taille d'un vecteur (justification : le système est humain donc le binning sur des valeurs entières a un sens). 
   - Transformer en valeur numérique distinctes par binning et faire un clustering sur le vecteur total
   - Faire directement du clustering sur vecteur total.
