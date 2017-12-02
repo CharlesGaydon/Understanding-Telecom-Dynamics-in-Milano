@@ -75,6 +75,17 @@ def unix_to_ints(unix_code):
     mdH.append(tstamp.weekday())
     return(list(map(int,mdH)))
 
+
+def get_label(df,transform,name_columns,percentage = .05):  
+    dftemp = df.copy()
+    dftemp['seuil'] = transform(*[df[name] for name in name_columns])
+    n = len(dftemp)
+    take = int(n*percentage)
+    seuil = np.min(dftemp.nlargest(take,'seuil').seuil)
+    dftemp['y'] = (dftemp.seuil>seuil).astype(int)
+    dftemp.drop('seuil',axis=1)
+    return dftemp
+
 if __name__ == "__main__":
     if len(sys.argv)<2:
         print("Usage : python geo_filtre.py file_to_process")
