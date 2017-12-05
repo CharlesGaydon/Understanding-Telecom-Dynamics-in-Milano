@@ -5,11 +5,10 @@ import random
 import json
 import pandas
 import numpy as np
- 
-df = pandas.DataFrame({
-    "x" : [11,28,388,400,420],
-    "y" : np.random.rand(5)
-})
+from webapp.model.prediction_during_time import get_callin_during_time
+
+
+df = get_callin_during_time('data/sms.csv')
  
 d = [
     dict([
