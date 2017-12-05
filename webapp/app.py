@@ -5,13 +5,16 @@ import random
 import json
 import pandas
 import numpy as np
-from webapp.model.prediction_during_time import get_callin_during_time
+from webapp.model.prediction_during_time import *
 
-data = np.concatenate(get_callin_during_time('data/sms.csv').as_matrix())
+data = get_callin_during_time()
+stddown, stdtop = createstd(data)
 
 df = pandas.DataFrame({
     "x" : range(len(data)),
-    "y" : data
+    "y" : data,
+    "ystdtop" : stdtop,
+    "ystddown" : stddown
 })
  
 d = [

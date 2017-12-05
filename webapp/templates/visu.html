@@ -47,12 +47,12 @@
  
                     //Create the Scale we will use for the Axis
                     var axisScale = d3.scale.linear()
-                                             .domain([0, 500])
+                                             .domain([0, 1300])
                                              .range([0, width]);
  
  
                     var yaxisScale = d3.scale.linear()
-                    .domain([0, 5])
+                    .domain([0, 3])
                     .range([ height,0]);
  
                     var xAxis = d3.svg.axis()
@@ -89,9 +89,42 @@
                       console.log(d.y);
                       return yaxisScale(d.y);
                     })
+
+                    var line1 = d3.svg.line()
+                    .x(function(d,i) {
+                      console.log(d.x);
+                      return axisScale(d.x);
+                    })
+                    .y(function(d,i) {
+                      console.log(d.ystdtop);
+                      return yaxisScale(d.ystdtop);
+                    })
+
+
+                    var line2 = d3.svg.line()
+                    .x(function(d,i) {
+                      console.log(d.x);
+                      return axisScale(d.x);
+                    })
+                    .y(function(d,i) {
+                      console.log(d.ystddown);
+                      return yaxisScale(d.ystddown);
+                    })
+
+
                     var data = {{ data|safe }}
-                    svgContainer.append("svg:path").attr("class", "line").attr("d", line(data));
- 
+                    svgContainer.append("svg:path")
+                                .attr("class", "line")
+                                .attr("d", line(data));
+
+                    svgContainer.append("svg:path")
+                                .attr("class", "line")
+                                .attr("d", line1(data));
+
+                    svgContainer.append("svg:path")
+                                .attr("class", "line")
+                                .attr("d", line2(data));
+
 </script>
  
 </html>
