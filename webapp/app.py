@@ -7,8 +7,12 @@ import pandas
 import numpy as np
 from webapp.model.prediction_during_time import get_callin_during_time
 
+data = np.concatenate(get_callin_during_time('data/sms.csv').as_matrix())
 
-df = get_callin_during_time('data/sms.csv')
+df = pandas.DataFrame({
+    "x" : range(len(data)),
+    "y" : data
+})
  
 d = [
     dict([
@@ -25,9 +29,6 @@ def event_stream():
  
 @app.route('/')
 def show_basic():
-    x = random.randint(0,101)
-    y = random.randint(0,101)
-    print(json.dumps(d))
     return render_template("visu.html",data=json.dumps(d))
  
  
