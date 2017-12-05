@@ -1,0 +1,7 @@
+pandas
+numpy
+matplotlib
+flask
+redis
+json
+random
