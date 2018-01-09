@@ -117,6 +117,7 @@ def unix_to_ints(unix_code):
     mdH.append(tstamp.weekday())
     return(list(map(int,mdH)))
 
+<<<<<<< HEAD
 """
 input:
 MI: a pd.DataFrame with header ->
@@ -156,6 +157,7 @@ def get_label(df,transform,name_columns,percentage = .05):
     dftemp['y'] = (dftemp.seuil>seuil).astype(int)
     dftemp.drop('seuil',axis=1)
     return(dftemp)
+
 def extract_a_square(square_to_extract = 5560,ori_path = "data/MI_data/",next_path = "data/MI_squares/"):
 
     # EXTRACT ALL
