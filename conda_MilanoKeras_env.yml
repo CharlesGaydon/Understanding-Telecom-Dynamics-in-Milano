@@ -1,0 +1,11 @@
+name: MilanoKeras
+dependencies :
+  - python=3.5
+  - keras
+  - numpy
+  - scipy
+  - jupyter
+  - matplotlib
+  - pandas
+  - scikit-learn
+  - tensorflow
