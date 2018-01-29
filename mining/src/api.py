@@ -10,12 +10,30 @@ api = Api(app)
 
 class Clustering(Resource):
     def get(self, algo):
+        clustering = ClusteringResult(5)
+
+        # /home/enzoclustering.get_apriori_result()
+        d = {}
         if algo == 'kmeans':
-            d = get_kmeans_result(5)
-        elif algo == 'tree':
-            d = get_isolation_forest_result()
-        else:
-            d = get_DBSCAN_result()
+            d = clustering.get_kmeans_result(5)
+        if algo == 'tree':
+            d = clustering.get_isolation_forest_result()
+        if algo == 'dbscan':
+            d = clustering.get_DBSCAN_result()
+        if algo == 'ward':
+            d = clustering.get_hierarchical_result()
+        if algo == 'charles':
+            files = [
+                'clusters_DBSCAN_eps_5.75_min_1.json',
+                'clusters_DBSCAN_eps_5.75_min_7.json',
+                'clusters_DBSCAN_eps_5.75_min_3.json',
+                'clusters_DBSCAN_eps_5.75_min_9.json',
+                'clusters_DBSCAN_eps_5.75_min_5.json'
+            ]
+            d = []
+            for file_ in files:
+                dd = json.load(open('learning/data/DBSCAN_json_clusters/' + file_))['Cluster']
+                d.append(dict(list(map(lambda x: (x[0], x[1] + 1), dd.items()))))
         data = json.dumps(d)
         return data
 

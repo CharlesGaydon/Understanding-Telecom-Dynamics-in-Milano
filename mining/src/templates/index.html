@@ -7,19 +7,18 @@
 
 <body>
     <header>
-        <h1> Clustering Algorithms </h1>
+        <h1 id="grid"> Clustering Algorithms </h1>
         <button id="btn"> Go to Kmeans representation </button>
-
         <button id="btn_dbscan"> Go to DBSCAN representation </button>
         <button id="btn_tree"> Go to isolation forest representation </button>
-
+        <button id="btn_charles"> Go to Charles </button>
+        <button id="btn_ward"> Go to hierarchical ward representation </button>
     </header>
 
-    <div id="grid"></div>
     <script>
 
         getId = function(i, j, data){
-            var square = (100 - j)*100 + (100 - i);
+            var square = (j)*100 + (100 - i);
             if(data.hasOwnProperty(square)){
                 return data[square];
             }
@@ -94,25 +93,13 @@
                         "#fff",
                         "#2C93E8",
                         "#F56C4E",
-                        "#838690",
-                        "#f3e"
+                        "#f3e",
+                        "#838690"
                     ];
                     return colors[d.click];
                 })
                 .style("stroke", "#222");
         };
-
-        var btn = document.getElementById("btn");
-        btn.addEventListener("click", function(){
-            var ourrequest = new XMLHttpRequest();
-            ourrequest.open('GET', 'http://localhost:5000/kmeans');
-            ourrequest.onload = function(){
-                var data = JSON.parse(ourrequest.responseText);
-                data = JSON.parse(data);
-                draw(data);
-            };
-                ourrequest.send();
-            });
 
         var btn_dbscan = document.getElementById("btn_dbscan");
         btn_dbscan.addEventListener("click", function(){
@@ -121,23 +108,79 @@
             ourrequest.onload = function(){
                 var data = JSON.parse(ourrequest.responseText);
                 data = JSON.parse(data);
-                draw(data);
+
+                d3.select('svg').remove();
+                draw(data['labels']);
+                document.getElementById("grid").innerHTML = "dbscan";
             };
                 ourrequest.send();
             });
 
         var btn_tree = document.getElementById("btn_tree");
-        btn_dbscan.addEventListener("click", function(){
+        btn_tree.addEventListener("click", function(){
             var ourrequest = new XMLHttpRequest();
             ourrequest.open('GET', 'http://localhost:5000/tree');
             ourrequest.onload = function(){
                 var data = JSON.parse(ourrequest.responseText);
                 data = JSON.parse(data);
-                draw(data);
+
+                document.getElementById("grid").innerHTML = "isolation forest";
+                d3.select('svg').remove();
+                draw(data['labels']);
+
             };
                 ourrequest.send();
             });
 
+        var btn = document.getElementById("btn");
+        btn.addEventListener("click", function(){
+            var ourrequest = new XMLHttpRequest();
+            ourrequest.open('GET', 'http://localhost:5000/kmeans');
+            ourrequest.onload = function(){
+                var data = JSON.parse(ourrequest.responseText);
+                data = JSON.parse(data);
+
+                document.getElementById("grid").innerHTML = "kmeans";
+                d3.select('svg').remove();
+                draw(data['labels']);
+            };
+                ourrequest.send();
+            });
+
+        var btn_charles = document.getElementById("btn_charles");
+        btn_charles.addEventListener("click", function(){
+            var ourrequest = new XMLHttpRequest();
+            ourrequest.open('GET', 'http://localhost:5000/charles');
+            ourrequest.onload = function(){
+                var data = JSON.parse(ourrequest.responseText);
+                data = JSON.parse(data);
+
+                d3.select('svg').remove();
+                for(var i = 0 ; i < data.length ; ++i)
+                    draw(data[i]);
+
+                document.getElementById("grid").innerHTML = "Charles";
+            };
+                ourrequest.send();
+            });
+
+
+        var btn_ward = document.getElementById("btn_ward");
+        btn_ward.addEventListener("click", function(){
+            var ourrequest = new XMLHttpRequest();
+            ourrequest.open('GET', 'http://localhost:5000/ward');
+            ourrequest.onload = function(){
+                var data = JSON.parse(ourrequest.responseText);
+                data = JSON.parse(data);
+
+                document.getElementById("grid").innerHTML = "ward";
+                d3.select('svg').remove();
+                draw(data['labels']);
+
+
+            };
+                ourrequest.send();
+            });
 
     </script>
 </body>
