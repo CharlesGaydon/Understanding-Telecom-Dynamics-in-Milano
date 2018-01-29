@@ -1,0 +1,10 @@
+pandas
+numpy
+matplotlib
+flask
+redis
+json
+random
+sklearn
+json
+random

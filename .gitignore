@@ -1,3 +1,4 @@
 Sample_data*
-data*
+learning/data*
 Milano-pregel/src/main/ressources/*
+.gitignore

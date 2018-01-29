@@ -1,0 +1,4 @@
+to run:
+docker build -t datam . 
+sudo docker run -it --rm -p 5000:5000 -v $PWD:/usr/src/app --name datar datam
+
