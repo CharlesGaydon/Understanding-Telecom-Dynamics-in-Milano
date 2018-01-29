@@ -11,6 +11,8 @@
         <button id="btn"> Go to Kmeans representation </button>
 
         <button id="btn_dbscan"> Go to DBSCAN representation </button>
+        <button id="btn_tree"> Go to isolation forest representation </button>
+
     </header>
 
     <div id="grid"></div>
@@ -116,6 +118,18 @@
         btn_dbscan.addEventListener("click", function(){
             var ourrequest = new XMLHttpRequest();
             ourrequest.open('GET', 'http://localhost:5000/dbscan');
+            ourrequest.onload = function(){
+                var data = JSON.parse(ourrequest.responseText);
+                data = JSON.parse(data);
+                draw(data);
+            };
+                ourrequest.send();
+            });
+
+        var btn_tree = document.getElementById("btn_tree");
+        btn_dbscan.addEventListener("click", function(){
+            var ourrequest = new XMLHttpRequest();
+            ourrequest.open('GET', 'http://localhost:5000/tree');
             ourrequest.onload = function(){
                 var data = JSON.parse(ourrequest.responseText);
                 data = JSON.parse(data);

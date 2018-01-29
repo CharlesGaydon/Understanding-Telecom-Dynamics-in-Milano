@@ -104,6 +104,15 @@ def apply_apriori2(df, column, support=60):
     return frequent_set
 
 
+def get_isolation_forest_result():
+    frame = init_data()
+    df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
+    df = df.dropna()
+    res = apply_isolation_forsest(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
+    print(res)
+    return dict(zip(list(map(str, df['Square'])), list(map(str, res))))
+
+
 def get_DBSCAN_result():
     frame = init_data()
     df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]

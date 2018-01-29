@@ -12,6 +12,8 @@ class Clustering(Resource):
     def get(self, algo):
         if algo == 'kmeans':
             d = get_kmeans_result(5)
+        elif algo == 'tree':
+            d = get_isolation_forest_result()
         else:
             d = get_DBSCAN_result()
         data = json.dumps(d)
