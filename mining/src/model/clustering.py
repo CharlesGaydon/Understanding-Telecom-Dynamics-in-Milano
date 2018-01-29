@@ -24,7 +24,7 @@ def apply_dbscan(X):
 
 
 def apply_isolation_forsest(X):
-    clf = IsolationForest(max_samples=100, random_state=rng)
+    clf = IsolationForest(random_state=rng, contamination=0.1)
     clf.fit(X)
     res = clf.predict(X)
     return res

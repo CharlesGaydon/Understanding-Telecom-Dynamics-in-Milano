@@ -7,6 +7,7 @@ import re
 import datetime
 import numpy as np
 import time as tt
+from sklearn import preprocessing
 
 
 def init_data(size):
@@ -25,6 +26,31 @@ def init_data(size):
         list_.append(df)
     frame = pd.concat(list_)
     frame.columns = ['Id', 'Square', 'Time', 'Country', 'SMSin', 'SMSout', 'Callin', 'Callout', 'Internet', 'day']
+    # frame = surcharge(frame)
+
+    return frame
+
+
+def surcharge(df):
+    df = df.dropna()
+    df_norm = df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']]
+
+    df_norm = df_norm.astype(float)
+    min_max_scaler = preprocessing.MinMaxScaler()
+    df_norm = min_max_scaler.fit_transform(df_norm)
+    df_norm = pd.DataFrame(df_norm)
+    df_norm[5] = df_norm[0] + df_norm[1] + df_norm[2] + df_norm[3] + df_norm[4]
+    df = df.reset_index()
+    df.head()
+    df = df.drop('index', axis=1)
+
+    df['charge'] = df_norm[5]
+    ind_surcharge = df['charge'].quantile(0.90)
+    df_surcharge = df[df['charge'] > ind_surcharge]
+
+    return df_surcharge
+
+
     # days = set(frame['day'])
     # squares = set(frame['Square'])
     #
@@ -40,8 +66,6 @@ def init_data(size):
     #         internet = np.std(dt['Internet'])
     #
     #
-
-    return frame.sample(frac=0.1)
 
 
 def keep_a_square(x, xmin=20, xmax=60, ymin=15, ymax=60):
@@ -60,36 +84,6 @@ def unix_to_ints(unix_code):
      mdH.append(tstamp.weekday())
      return list(map(int,mdH))
 
-
-def apply_apriori(df, column, support=60):
-    df['TIME'] = df['Time'].apply(unix_to_ints)
-    df['TIME'] = df['TIME'].apply(lambda x: x[2])
-    df = df.fillna(0)
-    gb = df.groupby(['day', 'TIME']).apply(lambda x: (x["Square"], x[column]))
-    k = gb.reset_index()
-
-    transactions = []
-    days = set(df['day'])
-    times = set(df['TIME'])
-
-    t = tt.time()
-
-    for day in days:
-        for time in times:
-            timeday = list(k[k['TIME'] == time][k['day'] == day].as_matrix())
-            square = timeday[0][2][0]
-            smsin = timeday[0][2][1]
-            std = np.std(smsin)
-            data = list(zip(square, smsin))
-            data = list(map(lambda x: x[0], filter(lambda x: x[1] > std, data)))
-            transactions.append(set(data))
-
-    t1 = tt.time()
-
-    frequent_set = list(map(list, apriori(transactions, len(transactions)/support)))
-    print("for=> " + str(t1 - t) + ", apriori=> " + str(tt.time() - t1))
-
-    return frequent_set
 
 
 # checking how often is in overload when the day is overloaded
@@ -130,6 +124,14 @@ class ClusteringResult:
         self.init_data = init_data(size)
         self.mem = {}
 
+    def get_most_frequent(self, df, labels):
+        df['label'] = labels
+        squares = set(df['Square'])
+        res = []
+        for square in squares:
+            res.append((str(square), str(np.argmax(np.bincount(df[df['Square'] == square]['label'])))))
+        return res
+
     def sort_by_frequency(self, labels):
         freq = list(map(lambda x: x[0], sorted(list(Counter(labels).items()), key=lambda x: -x[1])))
         labels_ = []
@@ -145,8 +147,7 @@ class ClusteringResult:
         df = df.dropna()
         res = apply_isolation_forsest(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
         res = self.sort_by_frequency(res)
-
-        labels = dict(zip(list(map(str, df['Square'])), list(map(str, res))))
+        labels = dict(self.get_most_frequent(df, res))
         self.mem['tree'] = {'labels': labels}
         return {'labels': labels}
 
@@ -159,7 +160,7 @@ class ClusteringResult:
         df = df.dropna()
         res = hierarchichal_ward(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
         res = self.sort_by_frequency(res)
-        labels = dict(zip(list(map(str, df['Square'])), list(map(str, res))))
+        labels = dict(self.get_most_frequent(df, res))
         self.mem['ward'] = {'labels': labels}
         return {'labels': labels}
 
@@ -171,7 +172,7 @@ class ClusteringResult:
         df = df.dropna()
         res = apply_dbscan(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
         res = self.sort_by_frequency(res)
-        labels = dict(zip(list(map(str, df['Square'])), list(map(str, res))))
+        labels = dict(self.get_most_frequent(df, res))
         self.mem['dbscan'] = {'labels': labels}
         return {'labels': labels}
 
@@ -183,28 +184,37 @@ class ClusteringResult:
         df = df.dropna()
         res, anova = apply_kmeans(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']], nb_clusters)
         res = self.sort_by_frequency(res)
-        labels = dict(zip(list(map(str, df['Square'])), list(map(str, res))))
+        labels = dict(self.get_most_frequent(df, res))
         self.mem['kmeans'] = {'labels': labels, 'anova': str(anova)}
         return {'labels': labels, 'anova': str(anova)}
 
-    def get_apriori_result(self, x1=45, x2=50, x3=45, x4=50, support=60):
-        if 'apriori' in self.mem:
-            return self.mem['apriori']
-        frame = self.init_data
-        df = frame[frame['Square'].apply(lambda x: keep_a_square(x, x1, x2, x3, x4))]
+    def apply_apriori(self, column, support=60):
+        df = self.init_data
         df['TIME'] = df['Time'].apply(unix_to_ints)
         df['TIME'] = df['TIME'].apply(lambda x: x[2])
         df = df.fillna(0)
+
+        transactions = []
         squares = set(df['Square'])
-        times = set(df['TIME'])
-        transation = []
+        t = tt.time()
+
         for square in squares:
-            for time in times:
-                d = df[df['Square'] == square]
-                dt = set(d[d['TIME'] == time]['day'])
-                if len(dt) != 0:
-                    transation.append(dt)
-        frequent_days = apriori(transation, len(transation)/support)
+            # on prend juste les résultats à midi (les plus élevés) pour ainsi réduire les temps de calcul
+            for time in [12]:
+                timeday = df[df['TIME'] == time]
+                timeday = timeday[timeday['Square'] == square]
+                day = timeday['day']
+                data = list(day)
+                if len(data) > 0:
+                    transactions.append(set(data))
+
+        t1 = tt.time()
+        print(transactions)
+        frequent_set = list(map(list, apriori(transactions, support)))
+        print("for=> " + str(t1 - t) + ", apriori=> " + str(tt.time() - t1))
+
+        # frequent_set = list(filter(lambda x: len(x) > 2, frequent_set))
+        return frequent_set
 
 
 

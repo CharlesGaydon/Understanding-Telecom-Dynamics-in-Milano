@@ -13,6 +13,7 @@
         <button id="btn_tree"> Go to isolation forest representation </button>
         <button id="btn_charles"> Go to Charles </button>
         <button id="btn_ward"> Go to hierarchical ward representation </button>
+        <button id="btn_apriori"> Go to apriori representation </button>
     </header>
 
     <script>
@@ -90,7 +91,7 @@
                 })
                 .style("fill", function (d) {
                     var colors = [
-                        "#fff",
+                        "#ef5",
                         "#2C93E8",
                         "#F56C4E",
                         "#f3e",
@@ -178,6 +179,20 @@
                 draw(data['labels']);
 
 
+            };
+                ourrequest.send();
+            });
+
+        var btn_apriori = document.getElementById("btn_apriori");
+        btn_apriori.addEventListener("click", function(){
+            var ourrequest = new XMLHttpRequest();
+            ourrequest.open('GET', 'http://localhost:5000/apriori');
+            ourrequest.onload = function(){
+                var data = JSON.parse(ourrequest.responseText);
+                data = JSON.parse(data);
+                console.log(data);
+                document.getElementById("grid").innerHTML = "apriori";
+                d3.select('svg').remove();
             };
                 ourrequest.send();
             });

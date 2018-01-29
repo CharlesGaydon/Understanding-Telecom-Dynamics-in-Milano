@@ -14,8 +14,10 @@ class Clustering(Resource):
 
         # /home/enzoclustering.get_apriori_result()
         d = {}
+        if algo == 'apriori':
+            d = clustering.apply_apriori('SMSin')
         if algo == 'kmeans':
-            d = clustering.get_kmeans_result(5)
+            d = clustering.get_kmeans_result(4)
         if algo == 'tree':
             d = clustering.get_isolation_forest_result()
         if algo == 'dbscan':
