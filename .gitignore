@@ -1,3 +1,4 @@
-Sample_data*
-data*
-Milano-pregel/src/main/ressources/*
+
+data/MI_data/*
+data/MI_squares/*
+Milano-pregel/src/main/ressources

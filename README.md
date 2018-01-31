@@ -14,7 +14,7 @@ puis l'activer (source si sous windows):
 	
 	(source) activate Milano
 
-La même procédure peut être suivie pour l'environnement MilanoKeras, qui nous permettra d'employer tensorflow avec une devanture Keras pour la tâche de régression sur la prédiction d'usage.
+Cet environnement nous permettra d'employer tensorflow avec une devanture Keras pour la tâche de régression sur la prédiction d'usage. On peut également y adjoindre manuellement *pytorch* en suivant les instructions officielles.
 
 ### Traitement de données
 

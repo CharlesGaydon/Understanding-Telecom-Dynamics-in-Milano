@@ -17,7 +17,8 @@ object MilanoGraph {
     val sc = new SparkContext(conf)
     val rootLogger = Logger.getRootLogger //import de org.apache.log4j
     rootLogger.setLevel(Level.ERROR) // pour éviter spark trop verbeux
-
+    val file = "./src/main/ressources/MItoMI-2013-12-01-4Pregel.txt"
+    val fileout = "./Results/MItoMI-2013-12-01-Pregelled.txt"
     case class Square(id: Int, value:Double)
 
     val Square_default = Square(0,1.toDouble) //one unit of information
@@ -28,7 +29,7 @@ object MilanoGraph {
           (id.toLong, Square(-1,-1.0.toDouble))
         }
     val links: RDD[Edge[Double]] =
-      sc.textFile("./src/main/ressources/MItoMI-2013-12-01-Pregel.txt")
+      sc.textFile(file)
           //.filter(line => line(1)<5000 && line(1)>4600 && line(2)<5000 && line(2)>4600)
         .map { line =>
           val row = line split ','
@@ -69,7 +70,7 @@ object MilanoGraph {
     var masters = G_pregel.vertices.map(u => (u._2.id, u._2.value)).coalesce(1).sortBy(_._2, ascending=false)
     var tosave = masters
     tosave.foreach(u => println(u._1, u._2))
-    //tosave.map(a => a._1 + "," + a._2).saveAsTextFile("Pregel-results-12-01") //null string !
+   // tosave.saveAsTextFile(fileout) //null string !
 
   }
 }
