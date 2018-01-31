@@ -5,7 +5,7 @@ from mining.src.model.mining import *
 from flask_bootstrap import Bootstrap
 
 app = Flask(__name__)
-Bootstrap(app)
+# Bootstrap(app)
 
 api = Api(app)
 
