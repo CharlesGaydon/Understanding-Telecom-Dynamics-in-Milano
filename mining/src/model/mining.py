@@ -1,5 +1,5 @@
 from mining.src.model.apriori import apriori
-from mining.src.model.clustering import *
+from mining.src.model.clustering import apply_isolation_forsest, apply_dbscan, apply_kmeans, hierarchichal_ward
 from collections import Counter
 import pandas as pd
 import glob
@@ -26,12 +26,12 @@ def init_data(size):
         list_.append(df)
     frame = pd.concat(list_)
     frame.columns = ['Id', 'Square', 'Time', 'Country', 'SMSin', 'SMSout', 'Callin', 'Callout', 'Internet', 'day']
-    # frame = surcharge(frame)
+    # frame = overload(frame)
 
     return frame
 
 
-def surcharge(df):
+def overload(df):
     df = df.dropna()
     df_norm = df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']]
 
@@ -45,10 +45,10 @@ def surcharge(df):
     df = df.drop('index', axis=1)
 
     df['charge'] = df_norm[5]
-    ind_surcharge = df['charge'].quantile(0.90)
-    df_surcharge = df[df['charge'] > ind_surcharge]
+    ind_overload = df['charge'].quantile(0.90)
+    df_overload = df[df['charge'] > ind_overload]
 
-    return df_surcharge
+    return df_overload
 
 
     # days = set(frame['day'])
@@ -85,39 +85,13 @@ def unix_to_ints(unix_code):
      return list(map(int,mdH))
 
 
-
-# checking how often is in overload when the day is overloaded
+# checking how often is in overload when the day is overloadd
 def overload_frequence(square, dataset):
     res = 0
     for line in dataset:
         if square in line:
             res += 1
     return res/len(dataset)
-
-
-def apply_apriori2(df, column, support=60):
-    df['TIME'] = df['Time'].apply(unix_to_ints)
-    df['TIME'] = df['TIME'].apply(lambda x: x[2])
-    df.dropna()
-    days = set(df['day'])
-    times = set(df['TIME'])
-
-    std = np.std(df[column])
-    df = df[df['TIME'] == 12]
-    df = df[['Square', column, 'TIME', 'day']]
-
-    transactions = []
-    for day in days:
-        transaction = set()
-        timeday = df[df['day'] == day]
-        squares = list(timeday['Square'])
-        for square in squares:
-            if square > std:
-                transaction.add(square)
-        transactions.append(transaction)
-    frequent_set = list(map(list, apriori(transactions, support)))
-    return frequent_set
-
 
 class ClusteringResult:
     def __init__(self, size):
@@ -152,10 +126,9 @@ class ClusteringResult:
         return {'labels': labels}
 
     def get_hierarchical_result(self):
-
         if 'ward' in self.mem:
             return self.mem['ward']
-        frame = self.init_data
+        frame = self.init_data.sample(frac=.7)
         df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
         df = df.dropna()
         res = hierarchichal_ward(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
@@ -177,16 +150,27 @@ class ClusteringResult:
         return {'labels': labels}
 
     def get_kmeans_result(self, nb_clusters):
-        if 'kmean' in self.mem:
-            return self.mem['kmean']
+        if 'kmeans' + str(nb_clusters) in self.mem:
+            return self.mem['kmeans' + str(nb_clusters)]
         frame = self.init_data
         df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
         df = df.dropna()
         res, anova = apply_kmeans(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']], nb_clusters)
         res = self.sort_by_frequency(res)
         labels = dict(self.get_most_frequent(df, res))
-        self.mem['kmeans'] = {'labels': labels, 'anova': str(anova)}
+        self.mem['kmeans' + str(nb_clusters)] = {'labels': labels, 'anova': str(anova)}
         return {'labels': labels, 'anova': str(anova)}
+
+    @staticmethod
+    def get_cluster(data, clusters, cluster_id):
+        squares = []
+        for square, cluster in clusters.items():
+            if cluster == cluster_id:
+                squares.append(square)
+        return data[data['Square'].isin(squares)]
+
+    def apriori_on_days(self, cluster):
+        pass
 
     def apply_apriori(self, column, support=60):
         df = self.init_data
