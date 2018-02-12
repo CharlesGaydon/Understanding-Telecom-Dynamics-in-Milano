@@ -1,24 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title> CLUSTERING ALGORITMH </title>
-	<script src="https://d3js.org/d3.v4.min.js"></script>
-</head>
-
-<body>
-    <header>
-        <h1 id="ttle"> Clustering Algorithms </h1>
-        <button id="btn"> Go to Kmeans representation </button>
-        <button id="btn_dbscan"> Go to DBSCAN representation </button>
-        <button id="btn_tree"> Go to isolation forest representation </button>
-        <button id="btn_ward"> Go to hierarchical ward representation </button>
-        <button id="btn_apriori"> Go to apriori representation </button>
-        <h1 id="grid"> </h1>
-        <div v-show="loading" id="cover"></div>
-    </header>
-
-    <script>
-        var clusters = 9;
 getId = function(i, j, data){
     var square = (j)*100 + (100 - i);
     if(data.hasOwnProperty(square)){
@@ -32,8 +11,8 @@ var gdt = function gridData(dt) {
     var data = new Array();
     var xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
     var ypos = 1;
-    var width = 7;
-    var height = 7;
+    var width = 5;
+    var height = 5;
 
     // iterate for rows
     for (var row = 0; row < 100; row++) {
@@ -92,16 +71,11 @@ var draw = function drawGrid(data) {
         })
         .style("fill", function (d) {
             var colors = [
-                "#2635ED",
-                "#45B841",
-                //"#7FDC3B",
-                //"#ABDC3B",
-                "#CBDC3B",
-                "#EDCC26",
-                "#EDA226",
-                "#ED7D26",
-                "#ED2641",
-                "#ED5026"
+                "#ef5",
+                "#2C93E8",
+                "#F56C4E",
+                "#f3e",
+                "#838690"
             ];
             return colors[d.click];
         })
@@ -112,7 +86,7 @@ var draw = function drawGrid(data) {
 var btn_dbscan = document.getElementById("btn_dbscan");
 btn_dbscan.addEventListener("click", function(){
     var ourrequest = new XMLHttpRequest();
-ourrequest.open('GET', 'http://localhost:5000/dbscan');
+    ourrequest.open('GET', 'http://localhost:5000/dbscan');
     ourrequest.onload = function(){
         var data = JSON.parse(ourrequest.responseText);
         data = JSON.parse(data);
@@ -127,13 +101,15 @@ ourrequest.open('GET', 'http://localhost:5000/dbscan');
 var btn_tree = document.getElementById("btn_tree");
 btn_tree.addEventListener("click", function(){
     var ourrequest = new XMLHttpRequest();
- ourrequest.open('GET', 'http://localhost:5000/tree');
+    ourrequest.open('GET', 'http://localhost:5000/tree');
     ourrequest.onload = function(){
         var data = JSON.parse(ourrequest.responseText);
         data = JSON.parse(data);
+
         document.getElementById("ttle").innerHTML = "isolation forest";
         d3.select('svg').remove();
         draw(data['labels']);
+
     };
         ourrequest.send();
 });
@@ -145,6 +121,7 @@ btn.addEventListener("click", function(){
     ourrequest.onload = function(){
         var data = JSON.parse(ourrequest.responseText);
         data = JSON.parse(data);
+
         document.getElementById("ttle").innerHTML = "kmeans";
         d3.select('svg').remove();
         draw(data['labels']);
@@ -156,10 +133,11 @@ btn.addEventListener("click", function(){
 var btn_ward = document.getElementById("btn_ward");
 btn_ward.addEventListener("click", function(){
     var ourrequest = new XMLHttpRequest();
-   ourrequest.open('GET', 'http://localhost:5000/ward');
+    ourrequest.open('GET', 'http://localhost:5000/ward');
     ourrequest.onload = function(){
         var data = JSON.parse(ourrequest.responseText);
         data = JSON.parse(data);
+
         document.getElementById("ttle").innerHTML = "ward";
         d3.select('svg').remove();
         draw(data['labels']);
@@ -175,12 +153,10 @@ btn_apriori.addEventListener("click", function(){
     ourrequest.open('GET', 'http://localhost:5000/apriori');
     ourrequest.onload = function(){
         var data = JSON.parse(ourrequest.responseText);
+        data = JSON.parse(data);
         console.log(data);
         document.getElementById("ttle").innerHTML = "apriori";
         d3.select('svg').remove();
     };
         ourrequest.send();
     });
-    </script>
-</body>
-</html>

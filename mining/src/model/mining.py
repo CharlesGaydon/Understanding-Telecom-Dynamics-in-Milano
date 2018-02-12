@@ -1,26 +1,71 @@
 from mining.src.model.apriori import apriori
-from mining.src.model.clustering import *
+from mining.src.model.clustering import apply_isolation_forsest, apply_dbscan, apply_kmeans, hierarchichal_ward
+from collections import Counter
 import pandas as pd
 import glob
 import re
 import datetime
 import numpy as np
 import time as tt
+from sklearn import preprocessing
 
 
-def init_data():
+def init_data(size):
     # merging multiple files into one pandaframe
     path = 'learning/data'  # use your path
     allFiles = glob.glob(path + "/sms-call-internet-mi-*.txt-sample.csv")
     frame = pd.DataFrame()
     list_ = []
+    i = 0
     for file_ in allFiles:
+        if i == size:
+            break
+        i += 1
         df = pd.read_csv(file_,delimiter=',',index_col=None, header=0)
         df['day'] = re.search(r'(\d+-\d+-\d+)',file_.split('/')[-1]).group(1)
         list_.append(df)
     frame = pd.concat(list_)
     frame.columns = ['Id', 'Square', 'Time', 'Country', 'SMSin', 'SMSout', 'Callin', 'Callout', 'Internet', 'day']
+    # frame = overload(frame)
+
     return frame
+
+
+def overload(df):
+    df = df.dropna()
+    df_norm = df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']]
+
+    df_norm = df_norm.astype(float)
+    min_max_scaler = preprocessing.MinMaxScaler()
+    df_norm = min_max_scaler.fit_transform(df_norm)
+    df_norm = pd.DataFrame(df_norm)
+    df_norm[5] = df_norm[0] + df_norm[1] + df_norm[2] + df_norm[3] + df_norm[4]
+    df = df.reset_index()
+    df.head()
+    df = df.drop('index', axis=1)
+
+    df['charge'] = df_norm[5]
+    ind_overload = df['charge'].quantile(0.90)
+    df_overload = df[df['charge'] > ind_overload]
+
+    return df_overload
+
+
+    # days = set(frame['day'])
+    # squares = set(frame['Square'])
+    #
+    # for day in days:
+    #     for square in squares:
+    #         d = df[df['Square'] == square]
+    #         dt = d[d['day'] == day]
+    #
+    #         smsin = np.std(dt['SMSin'])
+    #         smsout = np.std(dt['SMSout'])
+    #         callin = np.std(dt['Callin'])
+    #         callout = np.std(dt['Callout'])
+    #         internet = np.std(dt['Internet'])
+    #
+    #
 
 
 def keep_a_square(x, xmin=20, xmax=60, ymin=15, ymax=60):
@@ -40,38 +85,7 @@ def unix_to_ints(unix_code):
      return list(map(int,mdH))
 
 
-def apply_apriori(df, column, support=60):
-    df['TIME'] = df['Time'].apply(unix_to_ints)
-    df['TIME'] = df['TIME'].apply(lambda x: x[2])
-    df = df.fillna(0)
-    gb = df.groupby(['day', 'TIME']).apply(lambda x: (x["Square"], x[column]))
-    k = gb.reset_index()
-
-    transactions = []
-    days = set(df['day'])
-    times = set(df['TIME'])
-
-    t = tt.time()
-
-    for day in days:
-        for time in times:
-            timeday = list(k[k['TIME'] == time][k['day'] == day].as_matrix())
-            square = timeday[0][2][0]
-            smsin = timeday[0][2][1]
-            std = np.std(smsin)
-            data = list(zip(square, smsin))
-            data = list(map(lambda x: x[0], filter(lambda x: x[1] > std, data)))
-            transactions.append(set(data))
-
-    t1 = tt.time()
-
-    frequent_set = list(map(list, apriori(transactions, len(transactions)/support)))
-    print("for=> " + str(t1 - t) + ", apriori=> " + str(tt.time() - t1))
-
-    return frequent_set
-
-
-# checking how often is in overload when the day is overloaded
+# checking how often is in overload when the day is overloadd
 def overload_frequence(square, dataset):
     res = 0
     for line in dataset:
@@ -79,72 +93,115 @@ def overload_frequence(square, dataset):
             res += 1
     return res/len(dataset)
 
+class ClusteringResult:
+    def __init__(self, size):
+        self.init_data = init_data(size)
+        self.mem = {}
 
-def apply_apriori2(df, column, support=60):
-    df['TIME'] = df['Time'].apply(unix_to_ints)
-    df['TIME'] = df['TIME'].apply(lambda x: x[2])
-    df.dropna()
-    days = set(df['day'])
-    times = set(df['TIME'])
-
-    std = np.std(df[column])
-    df = df[df['TIME'] == 12]
-    df = df[['Square', column, 'TIME', 'day']]
-
-    transactions = []
-    for day in days:
-        transaction = set()
-        timeday = df[df['day'] == day]
-        squares = list(timeday['Square'])
+    def get_most_frequent(self, df, labels):
+        df['label'] = labels
+        squares = set(df['Square'])
+        res = []
         for square in squares:
-            if square > std:
-                transaction.add(square)
-        transactions.append(transaction)
-    frequent_set = list(map(list, apriori(transactions, support)))
-    return frequent_set
+            res.append((str(square), str(np.argmax(np.bincount(df[df['Square'] == square]['label'])))))
+        return res
+
+    def sort_by_frequency(self, labels):
+        freq = list(map(lambda x: x[0], sorted(list(Counter(labels).items()), key=lambda x: -x[1])))
+        labels_ = []
+        for label in labels:
+            labels_.append(freq.index(label))
+        return labels_
+
+    def get_isolation_forest_result(self):
+        if 'tree' in self.mem:
+            return self.mem['tree']
+        frame = self.init_data
+        df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
+        df = df.dropna()
+        res = apply_isolation_forsest(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
+        res = self.sort_by_frequency(res)
+        labels = dict(self.get_most_frequent(df, res))
+        self.mem['tree'] = {'labels': labels}
+        return {'labels': labels}
+
+    def get_hierarchical_result(self):
+        if 'ward' in self.mem:
+            return self.mem['ward']
+        frame = self.init_data.sample(frac=.7)
+        df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
+        df = df.dropna()
+        res = hierarchichal_ward(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
+        res = self.sort_by_frequency(res)
+        labels = dict(self.get_most_frequent(df, res))
+        self.mem['ward'] = {'labels': labels}
+        return {'labels': labels}
+
+    def get_DBSCAN_result(self):
+        if 'dbscan' in self.mem:
+            return self.mem['dbscan']
+        frame = self.init_data
+        df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
+        df = df.dropna()
+        res = apply_dbscan(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
+        res = self.sort_by_frequency(res)
+        labels = dict(self.get_most_frequent(df, res))
+        self.mem['dbscan'] = {'labels': labels}
+        return {'labels': labels}
+
+    def get_kmeans_result(self, nb_clusters):
+        if 'kmeans' + str(nb_clusters) in self.mem:
+            return self.mem['kmeans' + str(nb_clusters)]
+        frame = self.init_data
+        df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
+        df = df.dropna()
+        res, anova = apply_kmeans(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']], nb_clusters)
+        res = self.sort_by_frequency(res)
+        labels = dict(self.get_most_frequent(df, res))
+        self.mem['kmeans' + str(nb_clusters)] = {'labels': labels, 'anova': str(anova)}
+        return {'labels': labels, 'anova': str(anova)}
+
+    @staticmethod
+    def get_cluster(data, clusters, cluster_id):
+        squares = []
+        for square, cluster in clusters.items():
+            if cluster == cluster_id:
+                squares.append(square)
+        return data[data['Square'].isin(squares)]
+
+    def apriori_on_days(self, cluster):
+        pass
+
+    def apply_apriori(self, column, support=60):
+        df = self.init_data
+        df['TIME'] = df['Time'].apply(unix_to_ints)
+        df['TIME'] = df['TIME'].apply(lambda x: x[2])
+        df = df.fillna(0)
+
+        transactions = []
+        squares = set(df['Square'])
+        t = tt.time()
+
+        for square in squares:
+            # on prend juste les résultats à midi (les plus élevés) pour ainsi réduire les temps de calcul
+            for time in [12]:
+                timeday = df[df['TIME'] == time]
+                timeday = timeday[timeday['Square'] == square]
+                day = timeday['day']
+                data = list(day)
+                if len(data) > 0:
+                    transactions.append(set(data))
+
+        t1 = tt.time()
+        print(transactions)
+        frequent_set = list(map(list, apriori(transactions, support)))
+        print("for=> " + str(t1 - t) + ", apriori=> " + str(tt.time() - t1))
+
+        # frequent_set = list(filter(lambda x: len(x) > 2, frequent_set))
+        return frequent_set
 
 
-def get_isolation_forest_result():
-    frame = init_data()
-    df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
-    df = df.dropna()
-    res = apply_isolation_forsest(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
-    print(res)
-    return dict(zip(list(map(str, df['Square'])), list(map(str, res))))
 
-
-def get_DBSCAN_result():
-    frame = init_data()
-    df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
-    df = df.dropna()
-    res = apply_dbscan(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']])
-    print(res)
-    return dict(zip(list(map(str, df['Square'])), list(map(str, res))))
-
-
-def get_kmeans_result(nb_clusters):
-    frame = init_data()
-    df = frame[frame['Square'].apply(lambda x: keep_a_square(x, 0, 100, 0, 100))]
-    df = df.dropna()
-    res = apply_kmeans(df[['SMSin', 'SMSout', 'Callin', 'Callout', 'Internet']], nb_clusters)
-    return dict(zip(list(map(str, df['Square'])), list(map(str, res))))
-
-def get_apriori_result(x1=32, x2=50, x3=20, x4=40, support=60):
-    frame = init_data()
-    df = frame[frame['Square'].apply(lambda x: keep_a_square(x, x1, x2, x3, x4))]
-
-    result = apply_apriori2(df, 'SMSin', support=support)
-    size = 2
-    layers = {}
-    while True:
-        data = list(filter(lambda x: len(x) == size, result))
-        if len(data) == 0:
-            break
-        for lines in data:
-            for line in lines:
-                layers[str(line)] = size
-        size += 1
-    return layers
 
 
 
