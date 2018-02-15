@@ -1,24 +1,40 @@
-# Understanding Telecom Dynamics in Milano
+___
+Auteurs du projet : Romain CANDY, Charles GAYDON, Tangui de CREVOISIER, Enzo LEBRUN
 
-Italians are known to be quite talkative. What can their telecommunications teach us about the dynamic of Milano ?
+Année universitaire 2017-2018
 
-Here is the link of the hackmd : https://hackmd.io/GwMwxsCMBGkKwFoCcITQQFgMwY8kwwCAHAIYECm0ADNCBgCbRA==
-A enlever quand on passera public evidemment.
+[*Lien vers ce répertoire GitHub*](https://github.com/CharlesGaydon/Understanding-Telecom-Dynamics-in-Milano/).
+___
 
-usage :
+# Comprendre le réseau de télécommunications à Milan 
+Clustering, règles d'association, ML prédictif et classification
 
-Pour créer l'environnement anaconda, utiliser : 
+Les italiens sont connus pour etre bavards. Que peut nous apprendre sur eux les enregistrement de leurs télécommunications ?
+
+**Se référer aux rapports HTML joints pour comprendre les enjeux et les résultats de ce projet !**
+
+### Structure du répertoire:
+
+- trois premiers *jupyter notebook* = travail de machine learning (exploration descriptive, régression (LSTM), classification)
+- dossiers DataMining : contient un *jupyter notebook* ainsi que de nombreuses sources (scripts python pour génération de clustering + site web pour leur visualisation)
+- dossier Milano-pregel : contient un projet spark, écrit en scala et impliquant la librairie GraphX, pour une utilisation de l'algorithme Google-Pregel sur les données de telcom à Milan
+
+### Setup :
+
+Pour créer l'environnement virtuel Anaconda3, utiliser : 
 	
 	conda env create --file conda_Milano_env.yml
-puis l'activer (source si sous windows):
+
+puis l'activer (avec *source activate* si sous windows):
 	
 	(source) activate Milano
 
 Cet environnement nous permettra d'employer tensorflow avec une devanture Keras pour la tâche de régression sur la prédiction d'usage. On peut également y adjoindre manuellement *pytorch* en suivant les instructions officielles.
 
-### Traitement de données
+### Processing pour modèle de régression
 
-Les modèles de Machine Learnng sont pour l'instant entraînable *square* par *square*.
+Le modèle de Machine Learning utilisé dans le notebook *2_Predictive_LSTM_1_steps* est entraînable *square* par *square* (une aggrégation est cependant envisageable).
+
 Pour extraire les données d'un *square* dans un format approprié, s'assurer que l'arborescence des fichiers soit de la forme :
 
 - ./data/MI_data (ici tous les fichiers jour par jour des communications à Milan, non directionnelles)
@@ -27,5 +43,3 @@ Pour extraire les données d'un *square* dans un format approprié, s'assurer qu
 et faire : 
 
 	python preprocess_tools.py square_to_extract
-
-Dans le jupyter notebook peuvent être trouvées quelques explorations de données ainsi que les script d'entraînement et de test d'un modèle LSTM pour la prédiction de l'intensité des communications.

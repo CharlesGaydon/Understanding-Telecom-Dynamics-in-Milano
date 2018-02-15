@@ -1,0 +1,9 @@
+pandas
+numpy
+matplotlib
+flask
+flask_restful
+flask_bootstrap
+redis
+sklearn
+scipy
