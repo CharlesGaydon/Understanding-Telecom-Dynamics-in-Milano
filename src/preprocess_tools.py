@@ -43,6 +43,7 @@ def geo_filter_a_MI(file, fileout,keep_only = (60,55)):
     d['Hour'] = t["Time"].apply(lambda x : x[2])
     d['WDay'] = t["Time"].apply(lambda x : x[3])
     #d["Charge"] = d[["SMSin","SMSout","Callin","Callout","Internet"]].apply(lambda x:above_threeshold(score(x),th_score),axis=1)
+    d["Charge"] = d[["SMSin","SMSout","Callin","Callout","Internet"]].apply(lambda x : 1,axis=1)
     d.to_csv(path_or_buf = fileout, sep = '\t', index = False, header=True)
     print("Saved to : "+ fileout)
 
@@ -67,6 +68,7 @@ def amplify_for_Learning(d):
     d = d.set_index(["Time"])
     d = d.reindex(my_range)
     d.reset_index("Time", inplace = True)
+    d["Time"] = d["Time"]*600000
     d[["SMSin","SMSout","Callin","Callout","Internet"]] =d[["SMSin","SMSout","Callin","Callout","Internet"]].fillna(value = 0.0)
     d["Square"] = d["Square"].fillna(method = "ffill")
     return(d)
@@ -231,7 +233,7 @@ def get_label(df,transform,name_columns,percentage = .05):
     dftemp.drop('seuil',axis=1)
     return(dftemp)
 
-def extract_a_square(square_to_extract = 5560,ori_path = "data/MI_data/",next_path = "data/MI_squares/"):
+def extract_a_square(square_to_extract = 5560,ori_path = "../data/MI_data/",next_path = "../data/MI_squares/"):
 
     # EXTRACT ALL
     square_str = str(square_to_extract)
@@ -240,7 +242,7 @@ def extract_a_square(square_to_extract = 5560,ori_path = "data/MI_data/",next_pa
     print("Extracting square at position "+str(square_to_extract))
     next_path = next_path+square_str
     original_dir = os.listdir(ori_path)
-    next_dir = os.listdir()
+    next_dir = os.listdir(next_path)
     os.system("mkdir -p "+next_path+"/")
     for index,file_ori in enumerate(original_dir):
         print("["+str(index+1)+"/"+str(len(original_dir))+"]")
